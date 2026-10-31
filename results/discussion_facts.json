@@ -1,0 +1,28 @@
+{
+ "why": [
+  "Ranking on test macro F1 (mean \u00b1 std, 3 seeds): 1D-CNN 93.32 \u00b1 0.51 > BiLSTM 90.90 \u00b1 1.11 > Transformer 87.93 \u00b1 1.65. The CNN gap over the BiLSTM (about 2.4 points) is larger than either model's seed spread; the BiLSTM vs Transformer gap (about 3 points) is too.",
+  "The CNN is also the most stable across seeds (smallest std) and the cheapest: 127,494 parameters and 0.29 ms per window on CPU at batch 1, versus 1.70 ms (BiLSTM, about 6x slower) and 1.28 ms (Transformer).",
+  "The Transformer has the fewest parameters (101,574) but is the slowest when windows are batched (1.62 ms per window at batch 256 vs 0.66 BiLSTM and 0.16 CNN), because self-attention over 128 timesteps scales with the square of the sequence length. Explain this trade-off.",
+  "Where the models differ is on the moving activities, not the postures: per-class F1 for Walking is 0.994 (CNN), 0.959 (BiLSTM), 0.876 (Transformer). Moving-to-moving confusions per seed: CNN about 15, BiLSTM about 46, Transformer about 155.",
+  "Possible explanation to argue in your own words: walking-type signals are short repeated motion patterns; convolution has a built-in bias for local, shift-invariant patterns, while the Transformer must learn locality from only 5,905 training windows. Link to [5] (no family wins everywhere) and to the small-data risk in IV-C.",
+  "All three models score 0.99 to 1.00 macro F1 on validation but 0.88 to 0.93 on test. The 4 validation subjects are much easier than the 9 test subjects, so validation scores cannot rank the models.",
+  "Because validation saturates, early stopping picked very early checkpoints in most runs (best epoch 2 to 7 in 7 of 9 runs). The Transformer in particular stopped at 10 to 15 epochs. This is a real limitation: the Transformer may be under-trained under this shared budget. Say so, do not hide it.",
+  "Compared with the literature on UCI HAR: our CNN (93.15% mean accuracy) is below Ronao and Cho's 94.79% [2] and our BiLSTM (90.7% accuracy) is below Zhao et al.'s 93.57% [6]; we do no tuning, use fewer training subjects (4 held out), and report the mean over seeds rather than a best run.",
+  "Interim to final change: the interim single run (seed 42) gave CNN 92.98% and BiLSTM 91.14%. The final seed-42 runs give 92.91% and 92.09% most likely because the final runs used 1 CPU thread each (re-running the interim setup with default threads reproduced the interim CNN numbers exactly). This is exactly why we now report mean \u00b1 std over 3 seeds."
+ ],
+ "errors": [
+  "Sitting vs Standing is the main failure for every model: per seed, about 168 (CNN), 194 (BiLSTM) and 189 (Transformer) test windows are confused between these two. That is 83%, 71% and 53% of each model's errors.",
+  "Because all three families make about the same number of Sitting/Standing errors, the limit is likely in the data, not the architecture: both postures give near-flat signals that differ mainly in how gravity falls on the phone at the waist. Compare with the 88% Sitting recall of the SVM in [1].",
+  "Laying is almost never wrong for the CNN and Transformer (0 errors per seed), but the BiLSTM misclassifies about 18 Laying windows per seed, mostly as Upstairs.",
+  "The Transformer's second-largest error source is Walking predicted as Downstairs (48 to 93 windows per seed) and, in seed 42, Upstairs predicted as Walking (58 windows).",
+  "Errors are concentrated in a few people. Mean test accuracy for subject 10: CNN 74.7%, BiLSTM 65.3%, Transformer 61.7%; subject 9: 83.0%, 78.2%, 66.0%. Subjects 12, 13, 18, 20 and 24 are at 90% to 99% for all models. The same two subjects are hardest for all three families, which points to subject-specific behaviour (for example how they sit or stand), not a model bug.",
+  "[[FILL IN: owner of at least one model looks at a few misclassified windows from subject 10 (plot the signals) and describes what is different.]]"
+ ],
+ "conclusion": [
+  "Best model on every metric we measured: 1D-CNN (highest macro F1, lowest variance, fastest, mid-size).",
+  "BiLSTM second on accuracy, slowest at batch 1 because it processes 128 steps one after another.",
+  "Transformer last on accuracy under our shared budget; fewest parameters but most expensive when batched.",
+  "Shared limit: Sitting vs Standing, and two hard test subjects (9, 10).",
+  "Answer the Synopsis question in your own words: which inductive bias suits short, multichannel inertial windows, and why."
+ ]
+}
